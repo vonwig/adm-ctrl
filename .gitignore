@@ -1,0 +1,8 @@
+/.cpcache/
+/exploded/
+/resources/k8s/controller/endpoint.env
+/resources/k8s/controller/server.jks
+/.lsp/
+/target/
+/creds.edn
+/resources/k8s/controller/full.yaml

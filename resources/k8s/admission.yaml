@@ -1,0 +1,40 @@
+# Copyright © 2021 Atomist, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "policy-controller.atomist.com"
+webhooks:
+  - name: "policy-controller.atomist.com"
+    rules:
+      - apiGroups:
+          - "*"
+        apiVersions:
+          - "*"
+        operations:
+          - "CREATE"
+        resources:
+          - "pods"
+          - "services"
+        scope: "Namespaced"
+    clientConfig:
+      service:
+        namespace: "atomist"
+        name: "policy-controller"
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNyRENDQVpRQ0NRREhGUFNDRENkMHZ6QU5CZ2txaGtpRzl3MEJBUXNGQURBWE1SVXdFd1lEVlFRRERBeGgKWkcxcGMzTnBiMjVmWTJFd0lCY05NakV3TlRJd01USTFPVFUzV2hnUE1qSTVOVEF6TURVeE1qVTVOVGRhTUJjeApGVEFUQmdOVkJBTU1ER0ZrYldsemMybHZibDlqWVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDCkFRb0NnZ0VCQUo2bHVJY1ZGbnlLQk1lNk5jV3V0MXp5alhVRnhJQmFsN0xRVk8xZnQ4TVF4VWNSenpXdHRQYzUKTXdudnE4aUJKaWM0U01SNmswMUZoMWFWUkZDRitkNjI0eXZpN08xYWxLVWNGS09DNzh5dHJjOUJycjdqZHYrdApkazcvTFQyekgxa29ObmlRQzRza0x4Q3I4YW4yb3dNbFcyTEtyQ0NuZ3hGeEg4bHNBN3B2VHZHczh4NlE5cmhBCnZLTEdXdUFTSlVzSmEzK3o4YnhkWG1DbE8vdlg4bWtPNXBxUHhRVHRqNjg2Y0tidHhFYjdSZGduQkhZbmxpdGEKNlEzRjJmVTdyZDVURUZacUxFbUdTWHUxdk9wWkM4NHJTQ2JRZDZ4bGhXZmhzTW5ybzAwK3c3ZGNRVlcyWStXdQp4TStHVEVXT1ZONlBlcm9tYTcxdFJmT0w2cDhMWUdNQ0F3RUFBVEFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBCmZhMjdRWGs2eWN4MHZ6TUkyeTk5M21veGVocHZ6UkhzOU5XdVErNkV0cEdnMThqMHpYd0czRjBoYUhham80TXYKa3pPaDlHSFdBTGpYNWtKT29DeG00d04zWDg0YjNra1ZZK09iVmZ3TVh6OG02ZU44dVVZa1h1WllWOU9QSGk2aApuVC9EQVNOdVdMdTU2U05EZzB1MTI0RVJPRE9zUTI2K0RXQXdKYzdXWEFpdytsamt1bzZZcWJ0WVZZR2hsWjNZCllkVzFpbUxkcVZheElyWmZFWHVWSk1XbVVCY2NhakFIbUpFK0hidGxNYVhIS0dKd2ZaeHFleEZnQTlvblptWnIKN0d5RG04OW9oalUvTTQ3cmF3QU5FeXU3ZjAySlFtWFhjK1NZUXdnRFRvOVhDWHhiV1p1TEFxQ2hTVlZ4NW9jSwpZRkxCb0VaU1Z4WGZhSUkwa1lidFpBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    timeoutSeconds: 10
+    failurePolicy: Ignore
