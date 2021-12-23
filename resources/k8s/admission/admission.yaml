@@ -1,0 +1,46 @@
+# Copyright © 2021 Atomist, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "policy-controller.atomist.com"
+webhooks:
+  - name: "policy-controller.atomist.com"
+    namespaceSelector:
+      matchExpressions:
+      - key: policy-controller.atomist.com/webhook
+        operator: NotIn
+        values:
+        - ignore
+    rules:
+      - apiGroups:
+          - "*"
+        apiVersions:
+          - "*"
+        operations:
+          - "CREATE"
+        resources:
+          - "pods"
+          - "services"
+        scope: "Namespaced"
+    clientConfig:
+      service:
+        namespace: "atomist"
+        name: "policy-controller"
+      caBundle: "" 
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    timeoutSeconds: 10
+    failurePolicy: Ignore

@@ -67,7 +67,7 @@ spec:
               path: /health
               scheme: HTTPS
             failureThreshold: 1
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             timeoutSeconds: 15
             periodSeconds: 30
           readinessProbe:
@@ -76,7 +76,7 @@ spec:
               path: /health
               scheme: HTTPS
             failureThreshold: 1
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             timeoutSeconds: 15
             periodSeconds: 30
           # startupProbe:

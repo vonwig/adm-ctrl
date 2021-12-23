@@ -3,10 +3,10 @@ secretGenerator:
 - envs:
   - endpoint.env
   name: endpoint
-- files:
-  - server.jks
-  literals:
-  - password=replacethis
+- envs:
+  - keystore.env
+  files:
+  - server.pkcs12
   name: keystore
 resources:
 - deployment.yaml
@@ -18,6 +18,6 @@ commonLabels:
   app.kubernetes.io/name: atomist
 images:
 - name: atomist/adm-ctrl
-  newTag: v5
+  newTag: v49
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

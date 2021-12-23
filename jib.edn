@@ -1,0 +1,3 @@
+{:main atomist.adm-ctrl.handler
+ :target-image {:type :docker
+                :image-name atomist/adm-ctrl}}
