@@ -9,12 +9,15 @@ export DOCKER_CONFIG=$BASEDIR/.docker
 
 set -e
 
+if [ -n "$(git status --porcelain)" ]; then
+  echo "dirty jib. stop."
+  exit -1
+fi 
+
 # increment version
 bb -e '(spit "version.txt" (format "v%s" (inc (Integer. (str (second (re-find #"v(\d+)" (str/trim (slurp "version.txt")))))))))'
-# build OCI image to docker
-clj -T:jib build :config "$(./update-jib-config.clj)"
-# TODO get rid of this and use jib to push directly to DockerHub
-docker push atomist/adm-ctrl:$(cat version.txt)
+# build OCI image to dockerhub
+clj -Tjib build
 
 # Update K8 cluster
 pushd resources/k8s/controller

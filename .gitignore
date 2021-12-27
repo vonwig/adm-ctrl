@@ -14,3 +14,5 @@
 /server.csr
 /server.key
 /server.pkcs12
+/creds.edn
+/.creds.edn

@@ -9,7 +9,4 @@
         clj-http/clj-http {:mvn/version "3.12.3"}
         com.taoensso/timbre {:mvn/version "5.1.2"}}
  :aliases {:jetty
-           {:main-opts ["-m" "atomist.adm-ctrl.handler"]}
-           :jib
-           {:deps {io.github.atomihq/jibbit {:local/root "/Users/slim/atmhq/jibbit"}}
-            :ns-default jibbit.core}}}
+           {:main-opts ["-m" "atomist.adm-ctrl.handler"]}}}
