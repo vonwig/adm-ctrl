@@ -13,6 +13,7 @@ resources:
 - service.yaml
 - service_account.yaml
 - cluster_role.yaml
+- cluster_role_binding.yaml
 - namespace.yaml
 commonLabels:
   app.kubernetes.io/name: atomist
