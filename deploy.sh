@@ -15,6 +15,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi 
 
 # increment version
+# TODO increment and push tag
 bb -e '(spit "version.txt" (format "v%s" (inc (Integer. (str (second (re-find #"v(\d+)" (str/trim (slurp "version.txt")))))))))'
 # build OCI image to dockerhub
 clj -Tjib build

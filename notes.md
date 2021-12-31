@@ -1,3 +1,8 @@
+## Build
+
+1.  verify that there's a local `.creds.edn` with atomistbot dockerhub creds
+2.  run publish.sh - it will fail if the working dir is not clean
+
 ## Notes
 
 * `scope: "Namespaced"` indicates that we should only match resources in a namespace (not cluster resources)
@@ -32,4 +37,5 @@ x509: certificate relies on legacy Common Name field, use SANs or temporarily en
 
 [dynamic-admission-control]: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
 [image-policy-webhook]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#imagepolicywebhook
+[deprecated-pod-security-policies]: https://www.antitree.com/2020/11/pod-security-policies-are-being-deprecated-in-kubernetes/
 

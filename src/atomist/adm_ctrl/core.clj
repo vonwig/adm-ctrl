@@ -51,9 +51,10 @@
   @k8s)
 
 (defn log-images [object]
-  (let [{{:keys [namespace name]} :metadata spec :spec} object
+  (let [{{:keys [namespace name]} :metadata spec :spec kind :kind} object
         {{on-node :nodeName} :spec} (k8s/get-pod (k8s-client) namespace name)
         {{{:keys [operatingSystem architecture]} :nodeInfo} :status} (k8s/get-node (k8s-client) on-node)]
+    ;; TODO support ephemeral containers
     (doseq [container (concat (:containers spec) (:initContainers spec))]
       (atomist-call {:image {:url (:image container)}
                      :environment {:name namespace}
@@ -97,17 +98,31 @@
   ""
   [{:keys [body] :as req}]
   ;; request object could be nil if something is being deleted
-  (let [{{:keys [kind] :as object} :object dry-run :dryRun uid :uid} (-> body :request)
-        {{:keys [namespace name]} :metadata} object]
-    (if (= "Pod" kind)
+  (let [{{:keys [kind] {:keys [namespace name]} :metadata :as object} :object 
+         request-kind :kind
+         request-resource :resource
+         dry-run :dryRun 
+         uid :uid 
+         operation :operation} (-> body :request)]
+    (infof "%-50s%-50s" 
+           (format "%s/%s@%s" (:group request-kind) (:kind request-kind) (:version request-kind))
+           (format "%s/%s@%s" (:group request-resource) (:resource request-resource) (:version request-resource)))
+    (cond
+      (#{"Pod" "Deployment" "Job" "DaemonSet" "ReplicaSet" "StatefulSet"} kind)
       (do
-        (if dry-run 
-          (infof "pod dry run for uid %s - %s/%s" uid namespace name) 
-          (infof "pod admission request for uid %s - %s/%s" uid namespace name))
-        (let [{:keys [allowed] :as pod-decision} (decision object)]
-          (infof "decision: %s" pod-decision)
-          (when (not dry-run) (log->tap object))
-          (create-review uid pod-decision)))
-      ;; non-Pod addmission requests are always true
-      (create-review uid {:allowed true}))))
+        (if dry-run
+          (infof "%s dry run for uid %s - %s/%s" kind uid namespace name)
+          (infof "%s admission request for uid %s - %s/%s" kind uid namespace name))
+        (let [{:keys [allowed] :as resource-decision} (decision object)
+              {{:keys [namespace name]} :metadata} object]
+          (infof "reviewing %s:%s %s/%s" kind operation namespace name)
+          (infof "decision: %s" resource-decision)
+          (when (and (not dry-run) (= "Pod" kind)) 
+            (log->tap object))
+          (create-review uid resource-decision)))
+      :else
+      (do
+        (infof "default decision for %s" kind)
+        ;; non-Pod addmission requests are always true
+        (create-review uid {:allowed true})))))
 

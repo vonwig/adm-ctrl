@@ -19,5 +19,8 @@ metadata:
   name: policy-controller
 rules:
   - apiGroups: [""]
+    resources: ["deployments", "daemonsets", "jobs", "statefulsets"]
+    verbs: ["list", "watch"]
+  - apiGroups: [""]
     resources: ["pods", "nodes"]
     verbs: ["get"]

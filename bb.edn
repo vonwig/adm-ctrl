@@ -1,0 +1,45 @@
+{:min-bb-version "0.3.7"
+ :paths ["scripts"]
+ :deps {slimslenderslacks/bb-util {:local/root "/Users/slim/slimslenderslacks/bb-util"}
+        lread/status-line {:git/url "https://github.com/lread/status-line.git"
+                           :sha "35ed39645038e81b42cb15ed6753b8462e60a06d"}}
+ :tasks {:requires [[clojure.string :as string]
+                    [lread.status-line :as status]
+                    [babashka.process :as p]
+                    [babashka.fs :as fs]
+                    [clojure.tools.cli :as cli]
+                    [tasks :as git]]
+         :init (do (def cli-opts (cli/parse-opts *command-line-args* [["-m" "--message MESSSAGE" ""]
+                                                                      [nil "--skip-clean-check" "run anyway"] ])))
+         :enter (let [{:keys [name]} (current-task)] (status/line :head "TASK %s %s" name (string/join " " *command-line-args*)))
+         :leave (let [{:keys [name]} (current-task)] (status/line :detail "\nTASK %s done." name))
+
+         commit (git/recommit-any-updates (-> cli-opts :options :message))
+
+         clean? {:task (if (and (not (-> cli-opts :options :skip-clean-check)) (not (git/clean?)))
+                         (throw (ex-info "dirty working copy. stop" {})))}
+         ;; requires the jib tool to be installed
+         build-image {:depends [clean?]
+                      :task (when (or 
+                                    (seq (fs/modified-since "target/app.jar" (fs/glob "src" "**.clj")))
+                                    (seq (fs/modified-since "target/app.jar" (fs/glob "." "deps.edn")))
+                                    (seq (fs/modified-since "target/app.jar" (fs/glob "." "jib.edn"))))
+                              (clojure "-Tjib" "build" ":tag" (git/describe)))}
+         -k8-edit {:depends [build-image]
+                   :task (shell {:dir "resources/k8s/controller"} (format "kustomize edit set image atomist/adm-ctrl:%s" (git/describe)))}
+         context (shell "kubectl config use-context ecr-atmtest")
+         deploy-controller {:depends [context build-image]
+                            :task (-> (p/process "kustomize build ." {:dir "resources/k8s/overlays/staging"})
+                                      (p/process "envsubst" {:extra-env {"GIT_DESCRIBE" (git/describe)}})
+                                      (p/process "kubectl apply -f -" {:out :string})
+                                      deref
+                                      :out
+                                      (println))}
+         admission {:depends [context]
+                     :task (-> (p/process "kustomize build resources/k8s/admission")
+                               (p/process "kubectl apply -f -" {:out :string})
+                               deref
+                               :out
+                               (println)
+                               )}
+         }}

@@ -1,0 +1,7 @@
+resources:
+  - ../../controller
+images:
+- name: atomist/adm-ctrl
+  newTag: $GIT_DESCRIBE 
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
