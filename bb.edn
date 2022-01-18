@@ -10,23 +10,27 @@
                     [clojure.tools.cli :as cli]
                     [tasks :as git]]
          :init (do (def cli-opts (cli/parse-opts *command-line-args* [["-m" "--message MESSSAGE" ""]
-                                                                      [nil "--skip-clean-check" "run anyway"] ])))
+                                                                      [nil "--skip-clean-check" "run anyway"]])))
          :enter (let [{:keys [name]} (current-task)] (status/line :head "TASK %s %s" name (string/join " " *command-line-args*)))
          :leave (let [{:keys [name]} (current-task)] (status/line :detail "\nTASK %s done." name))
 
          commit (git/recommit-any-updates (-> cli-opts :options :message))
+         next-version (println (git/next-tag))
 
          clean? {:task (if (and (not (-> cli-opts :options :skip-clean-check)) (not (git/clean?)))
                          (throw (ex-info "dirty working copy. stop" {})))}
+         tag {:task (shell (format "git tag %s" (git/next-tag)))}
          ;; requires the jib tool to be installed
          build-image {:depends [clean?]
-                      :task (when (or 
-                                    (seq (fs/modified-since "target/app.jar" (fs/glob "src" "**.clj")))
-                                    (seq (fs/modified-since "target/app.jar" (fs/glob "." "deps.edn")))
-                                    (seq (fs/modified-since "target/app.jar" (fs/glob "." "jib.edn"))))
+                      :task (when (or
+                                   (seq (fs/modified-since "target/app.jar" (fs/glob "src" "**.clj")))
+                                   (seq (fs/modified-since "target/app.jar" (fs/glob "." "deps.edn")))
+                                   (seq (fs/modified-since "target/app.jar" (fs/glob "." "jib.edn"))))
                               (clojure "-Tjib" "build" ":tag" (git/describe)))}
          -k8-edit {:depends [build-image]
                    :task (shell {:dir "resources/k8s/controller"} (format "kustomize edit set image atomist/adm-ctrl:%s" (git/describe)))}
+         -k8-edit-for-release {:task (shell {:dir "resources/k8s/controller"} 
+                                            (format "kustomize edit set image atomist/adm-ctrl:%s" (git/next-tag)))}
          context (shell "kubectl config use-context ecr-atmtest")
          deploy-controller {:depends [context build-image]
                             :task (-> (p/process "kustomize build ." {:dir "resources/k8s/overlays/staging"})
@@ -36,9 +40,9 @@
                                       :out
                                       (println))}
          admission {:depends [context]
-                     :task (-> (p/process "kustomize build resources/k8s/admission")
-                               (p/process "kubectl apply -f -" {:out :string})
-                               deref
-                               :out
-                               (println)
-                               )}}}
+                    :task (-> (p/process "kustomize build resources/k8s/admission")
+                              (p/process "kubectl apply -f -" {:out :string})
+                              deref
+                              :out
+                              (println))}
+         release {:depends [clean? -k8-edit-for-release commit tag build-image]}}}
