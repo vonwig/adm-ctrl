@@ -48,6 +48,8 @@ $ ./cert.sh
 
 This procedure will create a service account, a cluster role binding, two secrets, a service, and a deployment.  All of these will be created in a new namespaced called `atomist`.
 
+![controller diagram](./docs/controller.png)
+
 ```bash
 kustomize build resources/k8s/controller | kubectl apply -f -
 ```
