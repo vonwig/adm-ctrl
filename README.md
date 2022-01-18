@@ -17,7 +17,7 @@
 
 ### 2. Api Key and Api Endpoint URL
 
-Update you local copy of the `resources/k8s/controller/endpoint.env` file with the url and an api key from your atomist workspace.
+Update your local copy of the `resources/k8s/controller/endpoint.env` file with the url and an api key from your atomist workspace.
 
 The file will start out like this.
 
@@ -50,8 +50,34 @@ This procedure will create a service account, a cluster role binding, two secret
 
 ![controller diagram](./docs/controller.png)
 
+Create an overlay for customisations.
+
+```
+mkdir -p resources/k8s/overlays/sandbox
+cp resources/templates/default_controller.yaml resources/k8s/overlays/sandbox/kustomization.yaml
+```
+
+This kustomization file will permit you to change the `CLUSTER_NAME` environment variable.  In the initial copy of the file, the value will be `"default"`, but it should be changed to the name of your cluster.  This change is made to the final line in your new kustomization file.
+
+```yaml
+resources:
+  - ../../controller
+patchesJson6902:
+- target:
+    group: apps
+    version: v1
+    kind: Deployment
+    name: policy-controller
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/3/value
+      value: "default"
+```
+
+Deploy the admission controller into the the current kubernetes context using the command shown below.
+
 ```bash
-kustomize build resources/k8s/controller | kubectl apply -f -
+kustomize build resources/k8s/overlays/sandbox | kubectl apply -f -
 ```
 
 At this point, the admission controller will be running but the cluster will not be routing any admission control requests to it.  Create a configuration to start sending admission control requests to the controller using the following script.

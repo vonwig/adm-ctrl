@@ -56,6 +56,8 @@ spec:
                 secretKeyRef:
                   name: keystore
                   key: password
+            - name: CLUSTER_NAME 
+              value: "default"
           volumeMounts:
             - name: jks
               mountPath: "/jks"
@@ -66,8 +68,8 @@ spec:
               port: 8443
               path: /health
               scheme: HTTPS
-            failureThreshold: 1
-            initialDelaySeconds: 90
+            failureThreshold: 2
+            initialDelaySeconds: 300
             timeoutSeconds: 15
             periodSeconds: 30
           readinessProbe:
@@ -75,17 +77,17 @@ spec:
               port: 8443
               path: /health
               scheme: HTTPS
-            failureThreshold: 1
-            initialDelaySeconds: 90
+            failureThreshold: 2
+            initialDelaySeconds: 300
             timeoutSeconds: 15
             periodSeconds: 30
-          # startupProbe:
-            # httpGet:
-              # port: 8443
-              # path: /health
-              # scheme: HTTPS
-            # failureThreshold: 8
-            # periodSeconds: 10
+          startupProbe:
+            httpGet:
+              port: 8443
+              path: /health
+              scheme: HTTPS
+            failureThreshold: 30
+            periodSeconds: 10
           resources:
             limits:
               cpu: 100m
@@ -94,7 +96,7 @@ spec:
               cpu: 100m
               memory: 512Mi
           securityContext:
-            runAsNonRoot: false
+            runAsNonRoot: true
             readOnlyRootFilesystem: true
       volumes:
         - name: jks

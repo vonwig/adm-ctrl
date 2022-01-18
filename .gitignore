@@ -16,3 +16,5 @@
 /server.pkcs12
 /creds.edn
 /.creds.edn
+/.DS_Store
+/docs/*.dtmp

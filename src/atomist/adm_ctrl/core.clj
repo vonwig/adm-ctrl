@@ -1,9 +1,5 @@
 (ns atomist.adm-ctrl.core
-  (:require [clojure.pprint :refer [pprint]]
-            [clojure.datafy :as datafy]
-            [clojure.java.io :as io]
-            [clojure.java.shell :as sh]
-            [clojure.core.async :as async]
+  (:require [clojure.core.async :as async]
             [cheshire.core :as json]
             [atomist.k8s :as k8s]
             [clj-http.client :as client]
@@ -16,6 +12,7 @@
 
 (def url (System/getenv "ATOMIST_URL"))
 (def api-key (System/getenv "ATOMIST_APIKEY"))
+(def cluster-name (System/getenv "CLUSTER_NAME"))
 
 (defn output-fn
   ([data] ; For partials
@@ -51,13 +48,15 @@
   @k8s)
 
 (defn log-images [object]
-  (let [{{:keys [namespace name]} :metadata spec :spec kind :kind} object
-        {{on-node :nodeName} :spec} (k8s/get-pod (k8s-client) namespace name)
+  (let [{{obj-ns :namespace obj-n :name} :metadata spec :spec kind :kind} object
+        {{on-node :nodeName} :spec} (k8s/get-pod (k8s-client) obj-ns obj-n)
         {{{:keys [operatingSystem architecture]} :nodeInfo} :status} (k8s/get-node (k8s-client) on-node)]
     ;; TODO support ephemeral containers
     (doseq [container (concat (:containers spec) (:initContainers spec))]
       (atomist-call {:image {:url (:image container)}
-                     :environment {:name namespace}
+                     :environment {:name (if (str/starts-with? cluster-name "atomist") 
+                                           obj-ns
+                                           (str cluster-name "/" obj-ns))}
                      :platform {:os operatingSystem
                                 :architecture architecture}}))))
 
@@ -70,19 +69,12 @@
               (log-images object)
               true
               (catch Throwable t
-                (let [{ {:keys [namespace name]} :metadata} object]
-                  (warn (format "unable to log %s/%s" namespace name))
+                (let [{ {obj-ns :namespace obj-n :name} :metadata} object]
+                  (warn (format "unable to log %s/%s - %s" obj-ns obj-n (.getMessage t)))
                   false)))) 
            (< counter 6))
       (async/<! (async/timeout 5000))
       (recur (inc counter)))))
-
-(defn decision 
-  [pod]
-  ;; TODO
-  ;; when not allowed at a :status key
-  ;;   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#status-v1-meta
-  {:allowed true})
 
 (defn admission-review
   [uid response]
@@ -98,31 +90,28 @@
   ""
   [{:keys [body] :as req}]
   ;; request object could be nil if something is being deleted
-  (let [{{:keys [kind] {:keys [namespace name]} :metadata :as object} :object 
+  (let [{{:keys [kind] {o-ns :namespace o-n :name} :metadata :as object} :object 
          request-kind :kind
          request-resource :resource
          dry-run :dryRun 
          uid :uid 
-         operation :operation} (-> body :request)]
-    (infof "%-50s%-50s" 
+         operation :operation} (-> body :request)
+        ;; decision (keys req-un [:allowed])
+        decision (constantly {:allowed true})]
+    (infof "kind: %-50s resource: %-50s" 
            (format "%s/%s@%s" (:group request-kind) (:kind request-kind) (:version request-kind))
            (format "%s/%s@%s" (:group request-resource) (:resource request-resource) (:version request-resource)))
     (cond
       (#{"Pod" "Deployment" "Job" "DaemonSet" "ReplicaSet" "StatefulSet"} kind)
       (do
         (if dry-run
-          (infof "%s dry run for uid %s - %s/%s" kind uid namespace name)
-          (infof "%s admission request for uid %s - %s/%s" kind uid namespace name))
-        (let [{:keys [allowed] :as resource-decision} (decision object)
-              {{:keys [namespace name]} :metadata} object]
-          (infof "reviewing %s:%s %s/%s" kind operation namespace name)
-          (infof "decision: %s" resource-decision)
+          (infof "%s dry run for uid %s - %s/%s" kind uid o-ns o-n)
+          (infof "%s admission request for uid %s - %s/%s" kind uid o-ns o-n))
+        (let [resource-decision (decision object)]
+          (infof "reviewing operation %s, of kind %s on %s/%s -> decision: %s" operation kind o-ns o-n resource-decision)
           (when (and (not dry-run) (= "Pod" kind)) 
             (log->tap object))
           (create-review uid resource-decision)))
       :else
-      (do
-        (infof "default decision for %s" kind)
-        ;; non-Pod addmission requests are always true
-        (create-review uid {:allowed true})))))
+        (create-review uid {:allowed true}) )))
 

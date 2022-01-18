@@ -9,9 +9,5 @@ patchesJson6902:
   patch: |-
     - op: replace
       path: /spec/template/spec/containers/0/env/3/value
-      value: "staging"
-images:
-- name: atomist/adm-ctrl
-  newTag: $GIT_DESCRIBE 
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
+      value: "sandbox"
+
