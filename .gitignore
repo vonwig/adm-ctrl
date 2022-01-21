@@ -3,10 +3,6 @@
 /target/
 /.nrepl-port
 /password.txt
-/resources/k8s/admission/ca.json
-/resources/k8s/controller/keystore.env
-/resources/k8s/controller/server.pkcs12
-/resources/k8s/controller/endpoint.env
 /ca.crt
 /ca.key
 /server.conf
