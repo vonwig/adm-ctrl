@@ -1,9 +1,6 @@
 namespace: atomist
 secretGenerator:
 - envs:
-  - endpoint.env
-  name: endpoint
-- envs:
   - keystore.env
   files:
   - server.pkcs12

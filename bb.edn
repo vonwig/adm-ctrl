@@ -10,7 +10,10 @@
                     [clojure.tools.cli :as cli]
                     [tasks :as git]]
          :init (do (def cli-opts (cli/parse-opts *command-line-args* [["-m" "--message MESSSAGE" ""]
-                                                                      [nil "--skip-clean-check" "run anyway"]])))
+                                                                      [nil "--skip-clean-check" "run anyway"]
+                                                                      [nil "--context CONTEXT" "kube context"]]))
+                   (def kube-config-context (-> cli-opts :options :context))
+                   )
          :enter (let [{:keys [name]} (current-task)] (status/line :head "TASK %s %s" name (string/join " " *command-line-args*)))
          :leave (let [{:keys [name]} (current-task)] (status/line :detail "\nTASK %s done." name))
 
@@ -29,11 +32,13 @@
                               (clojure "-Tjib" "build" ":tag" (git/describe)))}
          -k8-edit {:depends [build-image]
                    :task (shell {:dir "resources/k8s/controller"} (format "kustomize edit set image atomist/adm-ctrl:%s" (git/describe)))}
-         -k8-edit-for-release {:task (shell {:dir "resources/k8s/controller"} 
+         -k8-edit-for-release {:task (shell {:dir "resources/k8s/controller"}
                                             (format "kustomize edit set image atomist/adm-ctrl:%s" (git/next-tag)))}
-         context (shell "kubectl config use-context ecr-atmtest")
-         deploy-controller {:depends [context build-image]
-                            :task (-> (p/process "kustomize build ." {:dir "resources/k8s/overlays/staging"})
+         context (shell (if kube-config-context 
+                          (format "kubectl config use-context %s" kube-config-context)
+                          (throw (ex-info "needs --context" {}))))
+         deploy-controller {:depends [context #_build-image]
+                            :task (-> (p/process "kustomize build ." {:dir (format "resources/k8s/overlays/%s" kube-config-context)})
                                       (p/process "envsubst" {:extra-env {"GIT_DESCRIBE" (git/describe)}})
                                       (p/process "kubectl apply -f -" {:out :string})
                                       deref

@@ -15,9 +15,18 @@
 
 [Fork this repo](https://github.com/atomisth/adm-ctrl/fork).
 
+This repo contains a set of base kubernetes that you'll adapt using `kustomize`.
+
 ### 2. Api Key and Api Endpoint URL
 
-Update your local copy of the `resources/k8s/controller/endpoint.env` file with the url and an api key from your atomist workspace.
+Create an overlay for your cluster.  Choose a cluster name and then create a new overlay directory.
+
+```
+CLUSTER_NAME=replacethis
+mkdir -p resources/k8s/overlays/${CLUSTER_NAME}
+```
+
+Create a file named `resources/k8s/overlays/${CLUSTER_NAME}/endpoint.env`.
 
 The file will start out like this.
 
@@ -26,7 +35,7 @@ apiKey=<replace this>
 url=<replace this>
 ```
 
-Find these values in the [atomist app](https://dso.atomist.com/r/auth/integrations) and replace them in the file.
+The `apiKey` and `url` should be filled in with your workspace's values.  Find these in the [atomist app](https://dso.atomist.com/r/auth/integrations) and replace them in the file.
 
 ### 3. Initialize SSL certs and keystore
 
@@ -53,11 +62,13 @@ This procedure will create a service account, a cluster role binding, two secret
 Create an overlay for customisations.
 
 ```
-mkdir -p resources/k8s/overlays/sandbox
-cp resources/templates/default_controller.yaml resources/k8s/overlays/sandbox/kustomization.yaml
+CLUSTER_NAME=replacethis
+mkdir -p resources/k8s/overlays/${CLUSTER_NAME}
+cp resources/templates/default_controller.yaml resources/k8s/overlays/${CLUSTER_NAME}/kustomization.yaml
 ```
 
-This kustomization file will permit you to change the `CLUSTER_NAME` environment variable.  In the initial copy of the file, the value will be `"default"`, but it should be changed to the name of your cluster.  This change is made to the final line in your new kustomization file.
+This kustomization file will permit you to change the `CLUSTER_NAME` environment variable.  
+In the initial copy of the file, the value will be `"default"`, but it should be changed to the name of your cluster.  This change is made to the final line in your new kustomization file.
 
 ```yaml
 resources:

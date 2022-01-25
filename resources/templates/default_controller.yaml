@@ -1,5 +1,9 @@
 resources:
   - ../../controller
+secretGenerator:
+- envs:
+  - endpoint.env
+  name: endpoint
 patchesJson6902:
 - target:
     group: apps
