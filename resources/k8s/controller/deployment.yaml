@@ -51,11 +51,6 @@ spec:
                 secretKeyRef:
                   name: endpoint
                   key: url
-            - name: KEYSTORE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: keystore
-                  key: password
             - name: CLUSTER_NAME 
               value: "default"
           volumeMounts:
