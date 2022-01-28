@@ -1,11 +1,11 @@
 namespace: atomist
 resources:
-- deployment.yaml
-- service.yaml
-- service_account.yaml
-- cluster_role.yaml
-- cluster_role_binding.yaml
 - namespace.yaml
+- cert_job_cluster_role.yaml
+- cert_job_role.yaml
+- cert_job_service_account.yaml
+- cert_job_cluster_role_binding.yaml
+- cert_job_role_binding.yaml
 commonLabels:
   app.kubernetes.io/name: atomist
 images:
