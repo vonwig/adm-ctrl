@@ -15,4 +15,6 @@ patchesJson6902:
     - op: replace
       path: /spec/template/spec/containers/0/env/2/value
       value: "sandbox"
-
+images:
+- name: atomist/adm-ctrl
+  newTag: v3

@@ -71,9 +71,10 @@ In the initial copy of the file, the value will be `"default"`, but it should be
 resources:
   - ../../controller
 secretGenerator:
-- envs:
+- name: endpoint
+  behavior: merge
+  envs:
   - endpoint.env
-  name: endpoint
 patchesJson6902:
 - target:
     group: apps
