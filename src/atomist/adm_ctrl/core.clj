@@ -3,30 +3,14 @@
             [cheshire.core :as json]
             [atomist.k8s :as k8s]
             [clj-http.client :as client]
+            [atomist.logging]
             [taoensso.timbre :as timbre
-             :refer [log  trace  debug  info  warn  error  fatal  report
-                     logf tracef debugf infof warnf errorf fatalf reportf
-                     spy get-env merge-config! stacktrace]]
-            [taoensso.encore    :as enc :refer [have have? qb]]
+             :refer [info  warn infof]]
             [clojure.string :as str]))
 
 (def url (System/getenv "ATOMIST_URL"))
 (def api-key (System/getenv "ATOMIST_APIKEY"))
 (def cluster-name (System/getenv "CLUSTER_NAME"))
-
-(defn output-fn
-  ([data] ; For partials
-   (let [{:keys [level ?err #_vargs msg_ ?ns-str ?file hostname_
-                 timestamp_ ?line]} data]
-     (str
-      (when-let [ts (force timestamp_)] (str ts " "))
-      (str/upper-case (name level))  " "
-      (force msg_)
-      (when-let [err ?err]
-        (str enc/system-newline (stacktrace err)))))))
-
-(merge-config!
-  {:output-fn output-fn})
 
 (defn atomist-call [req]
   (let [response (client/post url {:headers {"Authorization" (format "Bearer %s" api-key)}
@@ -43,8 +27,8 @@
     (swap! k8s (fn [& args]
                  (info "... initializing k8s")
                  (if (System/getenv "LOCAL")
-                   (k8s/build-kubectl-client)
-                   (k8s/build-cluster-client)))))
+                   (k8s/build-http-kubectl-client)
+                   (k8s/build-http-cluster-client)))))
   @k8s)
 
 (defn log-images [object]

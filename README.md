@@ -96,8 +96,11 @@ kustomize build resources/k8s/overlays/sandbox | kubectl apply -f -
 At this point, the admission controller will be running but the cluster will not be routing any admission control requests to it.  Create a configuration to start sending admission control requests to the controller using the following script.
 
 ```bash
-kustomize build resources/k8s/admission | kubectl apply -f -
-# finally, patch the admission webhook with the ca certificate from earlier
+# skip the kube-system namespace
+k label namespace kube-system policy-controller.atomist.com/webhook=ignore
+# validating webhook configuration
+kubectl apply -f resources/k8s/admission/admission.yaml
+# finally, patch the admission webhook with the ca certificate generated earlier
 kubectl apply -f resources/k8s/jobs/patch.yaml
 ```
 
