@@ -3,6 +3,13 @@
 1.  verify that there's a local `.creds.edn` with atomistbot dockerhub creds
 2.  run publish.sh - it will fail if the working dir is not clean
 
+## Debugging 
+
+```
+k get validatingwebhookconfiguration policy-controller.atomist.com -o json | jq -r .webhooks[0].clientConfig.caBundle
+k get secret policy-controller-admission-cert -o json | jq -r .data.ca
+```
+
 ## Notes
 
 * `scope: "Namespaced"` indicates that we should only match resources in a namespace (not cluster resources)

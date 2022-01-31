@@ -83,7 +83,7 @@ patchesJson6902:
     name: policy-controller
   patch: |-
     - op: replace
-      path: /spec/template/spec/containers/0/env/3/value
+      path: /spec/template/spec/containers/0/env/2/value
       value: "default"
 ```
 

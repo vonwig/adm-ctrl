@@ -7,7 +7,7 @@
 (def secret-name "policy-controller-admission-cert")
 (def k-ns "atomist")
 (def target-secret-name "keystore")
-(def k8-client {:url "https://kubernetes.docker.internal:6443" #_"https://kubernetes.default.svc"
+(def k8-client {:url (System/getenv "APISERVER")
                 :token (slurp "/var/run/secrets/kubernetes.io/serviceaccount/token")
                 :ca-cert "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
                 :insecure? true})
